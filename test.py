@@ -162,7 +162,7 @@ with tab1:
     {under_1000_data if under_1000_data else "該当なし"}
     """
           # 🚀【超重要】Geminiに頼らず、手元にあるデータを直接美しい表にする！
-       try:
+    try:
         import pandas as pd
         all_table_data = []
         
