@@ -105,7 +105,7 @@ with tab1:
                             "per": per, "pbr": pbr, "yield": dividend_yield
                         })
 
-                    if (revenue_growth and revenue_growth >= 0.20) or (earnings_growth and earnings_growth >= 0.20):
+                    if (revenue_growth pipeline and revenue_growth >= 0.20) or (earnings_growth and earnings_growth >= 0.20):
                         high_growth_stocks.append({
                             "ticker": ticker, "name": name, "price": latest_price,
                             "per": per, "pbr": pbr, "growth": max(revenue_growth or 0, earnings_growth or 0) * 100
@@ -164,7 +164,6 @@ with tab2:
     st.write("特定のリストを持たず、AIが今この瞬間に東証で売買代金が急増している銘柄や材料株を完全自動でリサーチします。")
     
     if st.button("🚀 ネットの海から注目株の自動発掘を開始", type="primary", key="btn_trend"):
-        # 【修正箇所】 st.spinnerの「外側」で真っ先に鍵を準備するように修正しました！
         client = genai.Client(api_key=API_KEY)
         
         with st.spinner("🔍 Geminiが東証のリアルタイム出来高や最新ニュースをネットパトロール中...（約1分）"):
@@ -183,4 +182,14 @@ with tab2:
                売買代金急増株ならではの急激な乱高下リスクや、初心者が飛びつく前に必ず確認すべき警戒ポイント。
             """
 
-        with st.spinner("🧠 Geminiが最新のトレンド銘柄を執筆中..."):
+    with st.spinner("🧠 Geminiが最新のトレンド銘柄を執筆中..."):
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.5-flash', 
+                contents=prompt_trend,
+                config=types.GenerateContentConfig(tools=[{"google_search": {}}])
+            )
+            st.header("🏆 AI投資エージェントのリアルタイムトレンド発掘")
+            st.markdown(response.text)
+        except Exception as e:
+            st.error(f"エラーが発生しました。({e})")
