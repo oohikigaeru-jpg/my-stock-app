@@ -122,7 +122,31 @@ with tab1:
             growth_data = "".join([f"・{s['name']} ({s['ticker']}): 株価 {s['price']:.1f}円 / PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 成長率 {s['growth']:.1f}%\n" for s in high_growth_stocks[:10]])
             under_1000_data = "".join([f"・{s['name']} ({s['ticker']}): 株価 {s['price']:.1f}円 / PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 配当 {s['yield']:.2f}%\n" for s in under_1000_stocks[:15]])
 
+            # 【新機能】一次審査完了のメッセージの下に、現在価格と各データを画面に直接テキストとして一覧表示します
             st.success(f"📊 一次審査完了！ 高配当割安: {len(high_dividend_stocks)}社 / 高成長: {len(high_growth_stocks)}社 / 1000円以下株: {len(under_1000_stocks)}社")
+            
+            st.write("### 🔍 一次審査を通過した銘柄のリアルタイム現在値一覧")
+            
+            with st.expander("🟢 高配当・割安の通過銘柄（タップで展開）", expanded=True):
+                if high_dividend_stocks:
+                    for s in high_dividend_stocks:
+                        st.write(f"📈 **{s['name']} ({s['ticker']})** ｜ **現在価格: {s['price']:.1f}円** (配当: {s['yield']:.2f}% / PER: {s['per']:.1f}倍)")
+                else:
+                    st.write("該当銘柄なし")
+
+            with st.expander("🔵 高成長の通過銘柄（タップで展開）", expanded=True):
+                if high_growth_stocks:
+                    for s in high_growth_stocks:
+                        st.write(f"🚀 **{s['name']} ({s['ticker']})** ｜ **現在価格: {s['price']:.1f}円** (成長率目安: {s['growth']:.1f}% / PBR: {s['pbr']:.1f}倍)")
+                else:
+                    st.write("該当銘柄なし")
+
+            with st.expander("🟡 1000円以下の注目株（タップで展開）", expanded=True):
+                if under_1000_stocks:
+                    for s in under_1000_stocks:
+                        st.write(f"💎 **{s['name']} ({s['ticker']})** ｜ **現在価格: {s['price']:.1f}円** (PER: {s['per']:.1f}倍 / PBR: {s['pbr']:.1f}倍)")
+                else:
+                    st.write("該当銘柄なし")
 
             prompt = f"""
             あなたはプロの極めて優秀な投資コンサルタントです。
@@ -156,7 +180,7 @@ with tab1:
                 st.error(f"エラーが発生しました。({e})")
 
 # ==========================================
-# 【タブ2】新設：完全自由なリアルタイム急増株発掘機能
+# 【タブ2】完全自由なリアルタイム急増株発掘機能
 # ==========================================
 with tab2:
     st.write("### リアルタイムニュース・出来高発掘")
