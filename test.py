@@ -182,7 +182,7 @@ with tab2:
                売買代金急増株ならではの急激な乱高下リスクや、初心者が飛びつく前に必ず確認すべき警戒ポイント。
             """
 
-            with st.spinner("🧠 Geminiが最新のトレンド銘柄を執筆中..."):
+              with st.spinner("🧠 Geminiが最新のトレンド銘柄を執筆中..."):
         try:
             response = client.models.generate_content(
                 model='gemini-2.5-flash', 
