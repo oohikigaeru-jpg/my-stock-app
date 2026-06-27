@@ -161,63 +161,65 @@ with tab1:
     【3: 現在値1000円以下の通過株リスト】
     {under_1000_data if under_1000_data else "該当なし"}
     """
-    client = genai.Client(api_key=API_KEY) 
-    with st.spinner("🧠 Geminiが350社の結果をもとに分析中..."):
-        try:
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt,
-                config=types.GenerateContentConfig(tools=[{"google_search": {}}])
-            )
-            
-            st.header("✨ AI投資エージェントのスクリーニング分析")
-            
-            # 1. まずはAIの詳しい解説文をそのまま画面に表示
-            response_text = response.text
-            st.markdown(response_text)
-            
-            # 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗な表にする
+        client = genai.Client(api_key=API_KEY)
+        
+        with st.spinner("🧠 Geminiが350社の結果をもとに分析中..."):
             try:
-                # 文章を1行ずつに分解する
-                lines = response_text.strip().split("\n")
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(tools=[{"google_search": {}}])
+                )
                 
-                # 下から順番に探して「データ:」で始まる行を1行だけ見つける
-                data_line = None
-                for l in reversed(lines):
-                    if l.strip().startswith("データ:"):
-                        data_line = l.strip()
-                        break
+                st.header("✨ AI投資エージェントのスクリーニング分析")
                 
-                if data_line:
-                    import json
-                    import pandas as pd
+                # 1. まずはAIの詳しい解説文をそのまま画面に表示
+                response_text = response.text
+                st.markdown(response_text)
+                
+                # 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗な表にする
+                try:
+                    # 文章を1行ずつに分解する
+                    lines = response_text.strip().split("\n")
                     
-                    # 「データ:」の文字を消して、純粋なJSONデータにする
-                    json_str = data_line.replace("データ:", "").strip()
-                    data_list = json.loads(json_str)
+                    # 下から順番に探して「データ:」で始まる行を1行だけ見つける
+                    data_line = None
+                    for l in reversed(lines):
+                        if l.strip().startswith("データ:"):
+                            data_line = l.strip()
+                            break
                     
-                    # 表（データフレーム）に変換
-                    df_stock = pd.DataFrame(data_list)
-                    
-                    # 🚀 画面に並び替え可能な「スマートな表」を表示！
-                    st.subheader("🔍 オーディション厳選銘柄リスト（クリックで並び替え可能）")
-                    st.dataframe(
-                        df_stock,
-                        use_container_width=True, # 画面幅いっぱいに広げる
-                        hide_index=True,          # 左端の無駄な数字列（0, 1, 2...）を隠す
-                        column_config={
-                            "コード": st.column_config.TextColumn("銘柄コード"), # アルファベット混じり対応
-                            "株価": st.column_config.NumberColumn("現在値", format="¥%d"), # 自動で円マークをつける
-                            "社名": st.column_config.TextColumn("正式社名"),
-                            "枠": st.column_config.TextColumn("AI評価枠")
-                        }
-                    )
-            except Exception as e:
-                # 万が一AIがデータを出力し忘れてもエラーでアプリを止めないお守り
-                pass
+                    if data_line:
+                        import json
+                        import pandas as pd
+                        
+                        # 「データ:」の文字を消して、純粋なJSONデータにする
+                        json_str = data_line.replace("データ:", "").strip()
+                        data_list = json.loads(json_str)
+                        
+                        # 表（データフレーム）に変換
+                        df_stock = pd.DataFrame(data_list)
+                        
+                        # 🚀 画面に並び替え可能な「スマートな表」を表示！
+                        st.subheader("🔍 オーディション厳選銘柄リスト（クリックで並び替え可能）")
+                        st.dataframe(
+                            df_stock,
+                            use_container_width=True, # 画面幅いっぱいに広げる
+                            hide_index=True,          # 左端の無駄な数字列（0, 1, 2...）を隠す
+                            column_config={
+                                "コード": st.column_config.TextColumn("銘柄コード"), # アルファベット混じり対応
+                                "株価": st.column_config.NumberColumn("現在値", format="¥%d"), # 自動で円マークをつける
+                                "社名": st.column_config.TextColumn("正式社名"),
+                                "枠": st.column_config.TextColumn("AI評価枠")
+                            }
+                        )
+                except Exception as e:
+                    # 万が一AIがデータを出力し忘れてもエラーでアプリを止めないお守り
+                    pass
 
-        except Exception as e:
-            st.error(f"エラーが発生しました。( {e} )")
+            except Exception as e:
+                st.error(f"エラーが発生しました。( {e} )")
+
 
 with tab2:
     st.write("### リアルタイムニュース・出来高発掘")
