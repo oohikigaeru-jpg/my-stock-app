@@ -122,5 +122,5 @@ if st.button("🚀 最新トレンド・新設投信の自動発掘を開始", t
                 # 万が一AIがデータを出し忘れてもエラーでアプリを止めないお守り
                 pass
 
-        except Exception as e:
+            except Exception as e:
             st.error(f"エラーが発生しました。時間を置いてもう一度お試しください。( {e} )")
