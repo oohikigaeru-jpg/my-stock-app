@@ -162,22 +162,8 @@ with tab1:
     {under_1000_data if under_1000_data else "該当なし"}
     """
 
-
-        with st.spinner("🧠 Geminiが350社の結果をもとに分析中..."):
-            try:
-                response = client.models.generate_content(
-                    model='gemini-2.5-flash', 
-                    contents=prompt,
-                    config=types.GenerateContentConfig(tools=[{"google_search": {}}])
-                )
-        st.header("✨ AI投資エージェントのスクリーニング分析")
-        
-        # 1. まずはAIの詳しい解説文をそのまま画面に表示
-        response_text = response.text
-        st.markdown(response_text)
-        
-        # 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗な表にする
-               try:
+    with st.spinner("🧠 Geminiが350社の結果をもとに分析中..."):
+        try:
             response = client.models.generate_content(
                 model='gemini-2.5-flash',
                 contents=prompt,
@@ -233,9 +219,6 @@ with tab1:
         except Exception as e:
             st.error(f"エラーが発生しました。( {e} )")
 
-# ==========================================
-# 【タブ2】完全自由なリアルタイム急増株発掘機能
-# ==========================================
 with tab2:
     st.write("### リアルタイムニュース・出来高発掘")
     st.write("特定のリストを持たず、AIが今この瞬間に東証で売買代金が急増している銘柄や材料株を完全自動でリサーチします。")
