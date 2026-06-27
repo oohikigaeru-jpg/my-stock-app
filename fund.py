@@ -61,65 +61,66 @@ if st.button("🚀 最新トレンド・新設投信の自動発掘を開始", t
 """ 
 
 
-        try:
+          try:
             # Google検索を強制オンにして実行
             response = client.models.generate_content(
                 model='gemini-2.5-flash',
                 contents=prompt,
                 config=types.GenerateContentConfig(tools=[{"google_search": {}}])
             )
-                    st.header("✨ AIエージェントによる最新ファンド発掘レポート")
-        
-        # 1. まずはAIの詳しい解説文をそのまま画面に表示
-        response_text = response.text
-        st.markdown(response_text)
-        
-        # 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗なドーナツグラフにする
-        try:
-            # 文章を1行ずつに分解する
-            lines = response_text.strip().split("\n")
             
-            # 下から順番に探して「データ:」で始まる行を1行だけ見つける
-            data_line = None
-            for l in reversed(lines):
-                if l.strip().startswith("データ:"):
-                    data_line = l.strip()
-                    break
+            st.header("✨ AIエージェントによる最新ファンド発掘レポート")
             
-            if data_line:
-                import json
-                import pandas as pd
+            # 1. まずはAIの詳しい解説文をそのまま画面に表示
+            response_text = response.text
+            st.markdown(response_text)
+            
+            # 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗なドーナツグラフにする
+            try:
+                # 文章を1行ずつに分解する
+                lines = response_text.strip().split("\n")
                 
-                # 「データ:」の文字を消して、純粋なJSONデータにする
-                json_str = data_line.replace("データ:", "").strip()
-                data_list = json.loads(json_str)
+                # 下から順番に探して「データ:」で始まる行を1行だけ見つける
+                data_line = None
+                for l in reversed(lines):
+                    if l.strip().startswith("データ:"):
+                        data_line = l.strip()
+                        break
                 
-                # グラフ用のデータフレームに変換
-                df_fund = pd.DataFrame(data_list)
-                
-                st.subheader("📊 AI選定の黄金ポートフォリオ比率")
-                
-                # 🚀 洗練されたドーナツ型円グラフを作成
-                fig = px.pie(
-                    df_fund, 
-                    values="比率", 
-                    names="ファンド名", 
-                    hole=0.4, # 真ん中に穴をあけてドーナツ型に
-                    color_discrete_sequence=px.colors.sequential.Tealgrn # 目に優しいグリーン・ブルー系の配色
-                )
-                
-                # スマホの画面幅に合わせてデザインを最適化
-                fig.update_layout(
-                    margin=dict(l=20, r=20, t=20, b=20),
-                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5) # 凡例を下に配置
-                )
-                
-                # Streamlit画面にグラフを描画！
-                st.plotly_chart(fig, use_container_width=True)
-                
-        except Exception as graph_err:
-            # 万が一AIがデータを出し忘れてもエラーでアプリを止めないお守り
-            pass
+                if data_line:
+                    import json
+                    import pandas as pd
+                    
+                    # 「データ:」の文字を消して、純粋なJSONデータにする
+                    json_str = data_line.replace("データ:", "").strip()
+                    data_list = json.loads(json_str)
+                    
+                    # グラフ用のデータフレームに変換
+                    df_fund = pd.DataFrame(data_list)
+                    
+                    st.subheader("📊 AI選定の黄金ポートフォリオ比率")
+                    
+                    # 🚀 洗練されたドーナツ型円グラフを作成
+                    fig = px.pie(
+                        df_fund, 
+                        values="比率", 
+                        names="ファンド名", 
+                        hole=0.4, # 真ん中に穴をあけてドーナツ型に
+                        color_discrete_sequence=px.colors.sequential.Tealgrn # 目に優しいグリーン・ブルー系の配色
+                    )
+                    
+                    # スマホの画面幅に合わせてデザインを最適化
+                    fig.update_layout(
+                        margin=dict(l=20, r=20, t=20, b=20),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5) # 凡例を下に配置
+                    )
+                    
+                    # Streamlit画面にグラフを描画！
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+            except Exception as graph_err:
+                # 万が一AIがデータを出し忘れてもエラーでアプリを止めないお守り
+                pass
 
         except Exception as e:
-            st.error(f"エラーが発生しました。時間を置いてもう一度お試しください。({e})")
+            st.error(f"エラーが発生しました。時間を置いてもう一度お試しください。( {e} )")
