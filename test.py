@@ -162,51 +162,36 @@ with tab1:
     {under_1000_data if under_1000_data else "該当なし"}
     """
           # 🚀【超重要】Geminiに頼らず、手元にあるデータを直接美しい表にする！
-        try:
-            import pandas as pd
-            all_table_data = []
-                          # 1. 高配当割安株のデータを集約
-            if dividend_data:
-                for item in dividend_data:
-                    if isinstance(item, str):
-                        # 全角・半角・スペースの有無に関わらず、すべてのコロンを共通の目印にする
-                        clean_item = item.replace("：", ":").replace(" : ", ":")
-                        if ":" in clean_item:
-                            parts = clean_item.split(":")
-                            code_part = parts[0].strip()
-                            name_part = parts[1].strip()
-                            all_table_data.append({"銘柄コード": code_part, "正式社名": name_part, "AI評価枠": "高配当割安"})
-                    
-            # 2. 高成長株のデータを集約
-            if growth_data:
-                for item in growth_data:
-                    if isinstance(item, str):
-                        clean_item = item.replace("：", ":").replace(" : ", ":")
-                        if ":" in clean_item:
-                            parts = clean_item.split(":")
-                            code_part = parts[0].strip()
-                            name_part = parts[1].strip()
-                            all_table_data.append({"銘柄コード": code_part, "正式社名": name_part, "AI評価枠": "高成長"})
-                    
-            # 3. 1000円以下の注目株データを集約
-            if under_1000_data:
-                for item in under_1000_data:
-                    if isinstance(item, str):
-                        clean_item = item.replace("：", ":").replace(" : ", ":")
-                        if ":" in clean_item:
-                            parts = clean_item.split(":")
-                            code_part = parts[0].strip()
-                            name_part = parts[1].strip()
-                            all_table_data.append({"銘柄コード": code_part, "正式社名": name_part, "AI評価枠": "1000円以下"})
+       try:
+        import pandas as pd
+        all_table_data = []
+        
+        # 1. 高配当割安株のデータを集約
+        if dividend_data:
+            for item in dividend_data:
+                if isinstance(item, str) and item.strip():
+                    all_table_data.append({"厳選された銘柄の情報": item.strip(), "AI評価枠": "高配当割安"})
+                
+        # 2. 高成長株のデータを集約
+        if growth_data:
+            for item in growth_data:
+                if isinstance(item, str) and item.strip():
+                    all_table_data.append({"厳選された銘柄の情報": item.strip(), "AI評価枠": "高成長"})
+                
+        # 3. 1000円以下の注目株データを集約
+        if under_1000_data:
+            for item in under_1000_data:
+                if isinstance(item, str) and item.strip():
+                    all_table_data.append({"厳選された銘柄の情報": item.strip(), "AI評価枠": "1000円以下"})
 
+        if all_table_data:
+            df_stock = pd.DataFrame(all_table_data)
+            st.subheader("🔍 スクリーニング通過銘柄リスト（クリックで並び替え可能）")
+            # Excelのようにスマホでもサクサク動く美しい魔法の表を一発表示！
+            st.dataframe(df_stock, use_container_width=True, hide_index=True)
+    except Exception as table_err:
+        pass
 
-            if all_table_data:
-                df_stock = pd.DataFrame(all_table_data)
-                st.subheader("🔍 スクリーニング通過銘柄リスト（クリックで並び替え可能）")
-                # Excelのようにスマホでもサクサク動く美しい魔法の表をここで一発表示！
-                st.dataframe(df_stock, use_container_width=True, hide_index=True)
-        except Exception as table_err:
-            pass
 
         # --- ここからはGeminiの詳しい文章解説（制限がかかっていても、上の表は100%動きます） ---
         client = genai.Client(api_key=API_KEY)
