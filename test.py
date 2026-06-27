@@ -161,7 +161,7 @@ with tab1:
     【3: 現在値1000円以下の通過株リスト】
     {under_1000_data if under_1000_data else "該当なし"}
     """
-
+ client = genai.Client(api_key=API_KEY) 
     with st.spinner("🧠 Geminiが350社の結果をもとに分析中..."):
         try:
             response = client.models.generate_content(
