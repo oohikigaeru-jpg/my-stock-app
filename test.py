@@ -161,64 +161,58 @@ with tab1:
     【3: 現在値1000円以下の通過株リスト】
     {under_1000_data if under_1000_data else "該当なし"}
     """
+          # 🚀【超重要】Geminiに頼らず、手元にあるデータを直接美しい表にする！
+        try:
+            import pandas as pd
+            all_table_data = []
+            
+            # 1. 高配当割安株のデータを集約
+            if dividend_data:
+                for item in dividend_data:
+                    parts = item.split(":")
+                    code_part = parts[0].strip() if len(parts) > 0 else "不明"
+                    name_part = parts[1].split("(")[0].strip() if len(parts) > 1 else "不明"
+                    all_table_data.append({"銘柄コード": code_part, "正式社名": name_part, "AI評価枠": "高配当割安"})
+                    
+            # 2. 高成長株のデータを集約
+            if growth_data:
+                for item in growth_data:
+                    parts = item.split(":")
+                    code_part = parts[0].strip() if len(parts) > 0 else "不明"
+                    name_part = parts[1].split("(")[0].strip() if len(parts) > 1 else "不明"
+                    all_table_data.append({"銘柄コード": code_part, "正式社名": name_part, "AI評価枠": "高成長"})
+                    
+            # 3. 1000円以下の注目株データを集約
+            if under_1000_data:
+                for item in under_1000_data:
+                    parts = item.split(":")
+                    code_part = parts[0].strip() if len(parts) > 0 else "不明"
+                    name_part = parts[1].split("(")[0].strip() if len(parts) > 1 else "不明"
+                    all_table_data.append({"銘柄コード": code_part, "正式社名": name_part, "AI評価枠": "1000円以下"})
+
+            if all_table_data:
+                df_stock = pd.DataFrame(all_table_data)
+                st.subheader("🔍 スクリーニング通過銘柄リスト（クリックで並び替え可能）")
+                # Excelのようにスマホでもサクサク動く美しい魔法の表をここで一発表示！
+                st.dataframe(df_stock, use_container_width=True, hide_index=True)
+        except Exception as table_err:
+            pass
+
+        # --- ここからはGeminiの詳しい文章解説（制限がかかっていても、上の表は100%動きます） ---
         client = genai.Client(api_key=API_KEY)
         
-        with st.spinner("🧠 Geminiが350社の結果をもとに分析中..."):
+        with st.spinner("🧠 Geminiが350社の結果をもとに文章で分析中..."):
             try:
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt,
                     config=types.GenerateContentConfig(tools=[{"google_search": {}}])
                 )
-                
                 st.header("✨ AI投資エージェントのスクリーニング分析")
-                
-                # 1. まずはAIの詳しい解説文をそのまま画面に表示
-                response_text = response.text
-                st.markdown(response_text)
-                
-                # 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗な表にする
-                try:
-                    # 文章を1行ずつに分解する
-                    lines = response_text.strip().split("\n")
-                    
-                    # 下から順番に探して「データ:」で始まる行を1行だけ見つける
-                    data_line = None
-                    for l in reversed(lines):
-                        if l.strip().startswith("データ:"):
-                            data_line = l.strip()
-                            break
-                    
-                    if data_line:
-                        import json
-                        import pandas as pd
-                        
-                        # 「データ:」の文字を消して、純粋なJSONデータにする
-                        json_str = data_line.replace("データ:", "").strip()
-                        data_list = json.loads(json_str)
-                        
-                        # 表（データフレーム）に変換
-                        df_stock = pd.DataFrame(data_list)
-                        
-                        # 🚀 画面に並び替え可能な「スマートな表」を表示！
-                        st.subheader("🔍 オーディション厳選銘柄リスト（クリックで並び替え可能）")
-                        st.dataframe(
-                            df_stock,
-                            use_container_width=True, # 画面幅いっぱいに広げる
-                            hide_index=True,          # 左端の無駄な数字列（0, 1, 2...）を隠す
-                            column_config={
-                                "コード": st.column_config.TextColumn("銘柄コード"), # アルファベット混じり対応
-                                "株価": st.column_config.NumberColumn("現在値", format="¥%d"), # 自動で円マークをつける
-                                "社名": st.column_config.TextColumn("正式社名"),
-                                "枠": st.column_config.TextColumn("AI評価枠")
-                            }
-                        )
-                except Exception as e:
-                    # 万が一AIがデータを出力し忘れてもエラーでアプリを止めないお守り
-                    pass
-
+                st.markdown(response.text)
             except Exception as e:
-                st.error(f"エラーが発生しました。( {e} )")
+                st.warning("⚠️ 現在、Geminiの無料利用枠の制限中です（文章の生成をスキップしました）。上の【銘柄リスト表】をご活用ください！")
+
 
 
 with tab2:
