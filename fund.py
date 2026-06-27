@@ -61,7 +61,7 @@ if st.button("🚀 最新トレンド・新設投信の自動発掘を開始", t
 """ 
 
 
-          try:
+    try:
             # Google検索を強制オンにして実行
             response = client.models.generate_content(
                 model='gemini-2.5-flash',
