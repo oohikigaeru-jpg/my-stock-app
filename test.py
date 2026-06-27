@@ -79,7 +79,8 @@ with tab1:
             high_growth_stocks = []
             under_1000_stocks = []
 
-            for ticker in tickers_300:
+            # 【修正箇所】迷子にならないよう、ここを tickers_350 に正しく統一しました
+            for ticker in tickers_350:
                 try:
                     stock = yf.Ticker(ticker)
                     info = stock.info
@@ -181,18 +182,6 @@ with tab2:
             4. 【激動相場における冷徹なリスクと注意点】
                売買代金急増株ならではの急激な乱高下リスクや、初心者が飛びつく前に必ず確認すべき警戒ポイント。
             """
-
-    with st.spinner("🧠 Geminiが最新のトレンド銘柄を執筆中..."):
-        try:
-            response = client.models.generate_content(
-                model='gemini-2.5-flash', 
-                contents=prompt_trend,
-                config=types.GenerateContentConfig(tools=[{"google_search": {}}])
-            )
-            st.header("🏆 AI投資エージェントのリアルタイムトレンド発掘")
-            st.markdown(response.text)
-        except Exception as e:
-            st.error(f"エラーが発生しました。({e})")
 
 
 
