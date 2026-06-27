@@ -79,7 +79,6 @@ with tab1:
             high_growth_stocks = []
             under_1000_stocks = []
 
-            # 【修正箇所】迷子にならないよう、ここを tickers_350 に正しく統一しました
             for ticker in tickers_350:
                 try:
                     stock = yf.Ticker(ticker)
@@ -165,9 +164,10 @@ with tab2:
     st.write("特定のリストを持たず、AIが今この瞬間に東証で売買代金が急増している銘柄や材料株を完全自動でリサーチします。")
     
     if st.button("🚀 ネットの海から注目株の自動発掘を開始", type="primary", key="btn_trend"):
+        # 【超重要修正】右側のボタンが押された時にも、ここで確実に鍵(APIキー)の初期化を行うようにしました
+        client = genai.Client(api_key=API_KEY)
+        
         with st.spinner("🔍 Geminiが東証のリアルタイム出来高や最新ニュースをネットパトロール中...（約1分）"):
-            client = genai.Client(api_key=API_KEY)
-            
             prompt_trend = """
             あなたは日本の株式相場に精通した天才投資コンサルタントです。
             Google検索を駆使して、現在の日本株市場において「直近で売買代金が急増している銘柄」や「株価の強力な材料となるニュース・決算速報が発表されたばかりの注目銘柄」をリアルタイムに自動でリサーチ・発掘してください。
@@ -182,6 +182,5 @@ with tab2:
             4. 【激動相場における冷徹なリスクと注意点】
                売買代金急増株ならではの急激な乱高下リスクや、初心者が飛びつく前に必ず確認すべき警戒ポイント。
             """
-
 
 
