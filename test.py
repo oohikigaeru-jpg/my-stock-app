@@ -164,7 +164,7 @@ with tab2:
     st.write("特定のリストを持たず、AIが今この瞬間に東証で売買代金が急増している銘柄や材料株を完全自動でリサーチします。")
     
     if st.button("🚀 ネットの海から注目株の自動発掘を開始", type="primary", key="btn_trend"):
-        # 【超重要修正】右側のボタンが押された時にも、ここで確実に鍵(APIキー)の初期化を行うようにしました
+        # 【修正箇所】 st.spinnerの「外側」で真っ先に鍵を準備するように修正しました！
         client = genai.Client(api_key=API_KEY)
         
         with st.spinner("🔍 Geminiが東証のリアルタイム出来高や最新ニュースをネットパトロール中...（約1分）"):
@@ -183,4 +183,5 @@ with tab2:
                売買代金急増株ならではの急激な乱高下リスクや、初心者が飛びつく前に必ず確認すべき警戒ポイント。
             """
 
-
+        with st.spinner("🧠 Geminiが最新のトレンド銘柄を執筆中..."):
+            ry:response = client.models.generate_content(model='gemini-2.5-flash',contents=prompt_trend,config=types.GenerateContentConfig(tools=[{"google_search": {}}]))st.header("🏆 AI投資エージェントのリアルタイムトレンド発掘")st.markdown(response.text)except Exception as e:st.error(f"エラーが発生しました。({e})")
