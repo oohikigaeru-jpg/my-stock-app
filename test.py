@@ -19,7 +19,7 @@ if user_password != MY_PASSWORD:
     st.warning("正しいパスワードを入力するとアプリが起動します。")
     st.stop()
 
-st.write("日本の主要350銘柄から割安・高配当・高成長株をスクリーニングし、Geminiが最新ニュースをWEB検索して分析します。")
+st.write("日本の主要350銘柄から割安・高配当・高成長・1,000円以下のお手頃株をスクリーニングし、Geminiが最新ニュースをWEB検索して分析します。")
 
 # ==========================================
 # 3. 秘密金庫（Secrets）からAPIキーを安全に読み込む
@@ -32,7 +32,6 @@ else:
 
 # ==========================================
 # 4. 【350銘柄・英文字混じり対応版】日本のアクティブ主要株リスト
-# ※末尾のブロックに、新証券コード（アルファベット混じり）を25銘柄追加しました！
 # ==========================================
 tickers_350 = [
     # --- 従来の4桁数字銘柄（325社） ---
@@ -64,17 +63,17 @@ tickers_350 = [
     "9531.T", "9532.T", "9602.T", "9613.T", "9684.T", "9719.T", "9735.T", "9766.T", "9843.T", "9983.T",
     
     # --- 新認証コード（アルファベット混じり銘柄・厳選25社） ---
-    # 直近で新規上場（IPO）した勢いのある成長株や高注目銘柄を反映しています
     "130A.T", "141A.T", "143A.T", "147A.T", "151A.T", "153A.T", "155A.T", "165A.T", "175A.T", "180A.T",
     "186A.T", "193A.T", "198A.T", "215A.T", "218A.T", "233A.T", "240A.T", "248A.T", "250A.T", "5595.T",
-    "5871.T", "9166.T", "9348.T", "5253.T", "9984.T"  # ※9984.T重複を調整しアクティブ枠として配置
+    "5871.T", "9166.T", "9348.T", "5253.T", "9984.T"
 ]
 
 if st.button("🚀 全自動スクリーニング＆分析を開始", type="primary"):
-    with st.spinner("350銘柄を調査中...（英文字コード対応版、約2分かかります）"):
+    with st.spinner("350銘柄を調査中...（約2分かかります）"):
         client = genai.Client(api_key=API_KEY)
         high_dividend_stocks = []
         high_growth_stocks = []
+        under_1000_stocks = [] # 【新機能】1000円以下株の格納庫
 
         for ticker in tickers_350:
             try:
@@ -96,38 +95,57 @@ if st.button("🚀 全自動スクリーニング＆分析を開始", type="prim
                 if per is None or pbr is None or per == 'N/A' or pbr == 'N/A':
                     continue
 
+                # A: 高配当・割安フィルター
                 if per <= 15.0 and pbr <= 1.2 and dividend_yield >= 3.5:
                     high_dividend_stocks.append({
                         "ticker": ticker, "name": name, "price": latest_price,
                         "per": per, "pbr": pbr, "yield": dividend_yield
                     })
 
+                # B: 高成長フィルター
                 if (revenue_growth and revenue_growth >= 0.20) or (earnings_growth and earnings_growth >= 0.20):
                     high_growth_stocks.append({
                         "ticker": ticker, "name": name, "price": latest_price,
                         "per": per, "pbr": pbr, "growth": max(revenue_growth or 0, earnings_growth or 0) * 100
                     })
+
+                # 【新機能】C: 現在価格1000円以下フィルター (割安感や最低限の配当がある魅力株に絞るためPBR1.5倍以下に設定)
+                if latest_price <= 1000.0 and pbr <= 1.5:
+                    under_1000_stocks.append({
+                        "ticker": ticker, "name": name, "price": latest_price,
+                        "per": per, "pbr": pbr, "yield": dividend_yield
+                    })
+
             except Exception:
                 continue
 
-        dividend_data = "".join([f"・{s['name']} ({s['ticker']}): PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 配当利回り {s['yield']:.2f}%\n" for s in high_dividend_stocks[:10]])
-        growth_data = "".join([f"・{s['name']} ({s['ticker']}): PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 成長率目安 {s['growth']:.1f}%\n" for s in high_growth_stocks[:10]])
+        # 各データをAIに渡す用のテキストに変換
+        dividend_data = "".join([f"・{s['name']} ({s['ticker']}): 株価 {s['price']:.1f}円 / PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 配当 {s['yield']:.2f}%\n" for s in high_dividend_stocks[:10]])
+        growth_data = "".join([f"・{s['name']} ({s['ticker']}): 株価 {s['price']:.1f}円 / PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 成長率 {s['growth']:.1f}%\n" for s in high_growth_stocks[:10]])
+        under_1000_data = "".join([f"・{s['name']} ({s['ticker']}): 株価 {s['price']:.1f}円 / PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 配当 {s['yield']:.2f}%\n" for s in under_1000_stocks[:15]])
 
-        st.success(f"📊 一次審査完了！ 高配当割安: {len(high_dividend_stocks)}社 / 高成長: {len(high_growth_stocks)}社 が通過。")
+        st.success(f"📊 一次審査完了！ 高配当割安: {len(high_dividend_stocks)}社 / 高成長: {len(high_growth_stocks)}社 / 1000円以下株: {len(under_1000_stocks)}社 が通過。")
 
         prompt = f"""
         あなたはプロの極めて優秀な投資コンサルタントです。
-        以下の通過銘柄について、Google検索で現在の最新ニュースや決算をリサーチした上で、
-        1.【高配当・割安枠】の厳選提案、2.【高成長枠】の厳選提案、3.現在の市場の注意点 を日本語で分かりやすく詳細に解説してください。
+        プログラムによる一次スクリーニングを通過した以下の3つのリストについて、Google検索で最新ニュースや決算をリアルタイム分析した上で、日本語で詳細に解説・提案してください。
+
+        1.【高配当・割安枠】から、今最もおすすめする銘柄を【1〜2つ】厳選とその詳細な理由。
+        2.【高成長枠】から、今後株価の大幅な伸びが期待できる銘柄を【1〜2つ】厳選とその詳細な理由。
+        3.【新設：現在値1000円以下の注目株枠】から、少額から投資しやすく最新ニュースの材料も良い「おすすめ銘柄3選」を厳選し、それぞれの魅力と選定理由。
+        4.初心者が今、市場全体に対して警戒すべきリスク。
 
         【1: 高配当割安株リスト】
         {dividend_data if dividend_data else "該当なし"}
 
         【2: 高成長株リスト】
         {growth_data if growth_data else "該当なし"}
+
+        【3: 現在値1000円以下の通過株リスト】
+        {under_1000_data if under_1000_data else "該当なし"}
         """
 
-    with st.spinner("🧠 GeminiがGoogle検索を駆使して分析中..."):
+    with st.spinner("🧠 GeminiがGoogle検索で最新ニュースを巡回し、1000円以下株も含めて超絶分析中..."):
         try:
             response = client.models.generate_content(
                 model='gemini-2.5-flash',
@@ -138,3 +156,4 @@ if st.button("🚀 全自動スクリーニング＆分析を開始", type="prim
             st.markdown(response.text)
         except Exception as e:
             st.error(f"エラーが発生しました。({e})")
+
