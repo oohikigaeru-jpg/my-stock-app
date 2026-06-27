@@ -174,8 +174,9 @@ with tab1:
         
         # 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗な表にする
         try:
-            lines = response_text.strip().split("\n")
-            data_line = [l for l in lines if l.startswith("データ:")]
+           # 最後の行から「データ:」で始まる行を1行だけ直接見つける
+           data_line = next((l for l in reversed(response_text.strip().split("\n"))) if l.startswith("データ:")), None)
+
             
             if data_line:
                 import json
