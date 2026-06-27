@@ -177,46 +177,61 @@ with tab1:
         st.markdown(response_text)
         
         # 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗な表にする
-        try:
-            # 文章を1行ずつに分解する
-            lines = response_text.strip().split("\n")
+               try:
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt,
+                config=types.GenerateContentConfig(tools=[{"google_search": {}}])
+            )
             
-            # 下から順番に探して「データ:」で始まる行を1行だけ見つける
-            data_line = None
-            for l in reversed(lines):
-                if l.strip().startswith("データ:"):
-                    data_line = l.strip()
-                    break
+            st.header("✨ AI投資エージェントのスクリーニング分析")
             
-            if data_line:
-                import json
+            # 1. まずはAIの詳しい解説文をそのまま画面に表示
+            response_text = response.text
+            st.markdown(response_text)
+            
+            # 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗な表にする
+            try:
+                # 文章を1行ずつに分解する
+                lines = response_text.strip().split("\n")
                 
-                # 「データ:」の文字を消して、純粋なJSONデータにする
-                json_str = data_line.replace("データ:", "").strip()
-                data_list = json.loads(json_str)
+                # 下から順番に探して「データ:」で始まる行を1行だけ見つける
+                data_line = None
+                for l in reversed(lines):
+                    if l.strip().startswith("データ:"):
+                        data_line = l.strip()
+                        break
                 
-                # 表（データフレーム）に変換
-                df_stock = pd.DataFrame(data_list)
-                
-                # 🚀 画面に並び替え可能な「スマートな表」を表示！
-                st.subheader("🔍 オーディション厳選銘柄リスト（クリックで並び替え可能）")
-                st.dataframe(
-                    df_stock,
-                    use_container_width=True, # 画面幅いっぱいに広げる
-                    hide_index=True,          # 左端の無駄な数字列（0, 1, 2...）を隠す
-                    column_config={
-                        "コード": st.column_config.TextColumn("銘柄コード"), # アルファベット混じり対応
-                        "株価": st.column_config.NumberColumn("現在値", format="¥%d"), # 自動で円マークをつける
-                        "社名": st.column_config.TextColumn("正式社名"),
-                        "枠": st.column_config.TextColumn("AI評価枠")
-                    }
-                )
-        except Exception as e:
-            # 万が一AIがデータを出力し忘れてもエラーでアプリを止めないお守り
-            pass
-
+                if data_line:
+                    import json
+                    import pandas as pd
+                    
+                    # 「データ:」の文字を消して、純粋なJSONデータにする
+                    json_str = data_line.replace("データ:", "").strip()
+                    data_list = json.loads(json_str)
+                    
+                    # 表（データフレーム）に変換
+                    df_stock = pd.DataFrame(data_list)
+                    
+                    # 🚀 画面に並び替え可能な「スマートな表」を表示！
+                    st.subheader("🔍 オーディション厳選銘柄リスト（クリックで並び替え可能）")
+                    st.dataframe(
+                        df_stock,
+                        use_container_width=True, # 画面幅いっぱいに広げる
+                        hide_index=True,          # 左端の無駄な数字列（0, 1, 2...）を隠す
+                        column_config={
+                            "コード": st.column_config.TextColumn("銘柄コード"), # アルファベット混じり対応
+                            "株価": st.column_config.NumberColumn("現在値", format="¥%d"), # 自動で円マークをつける
+                            "社名": st.column_config.TextColumn("正式社名"),
+                            "枠": st.column_config.TextColumn("AI評価枠")
+                        }
+                    )
             except Exception as e:
-                st.error(f"エラーが発生しました。({e})")
+                # 万が一AIがデータを出力し忘れてもエラーでアプリを止めないお守り
+                pass
+
+        except Exception as e:
+            st.error(f"エラーが発生しました。( {e} )")
 
 # ==========================================
 # 【タブ2】完全自由なリアルタイム急増株発掘機能
