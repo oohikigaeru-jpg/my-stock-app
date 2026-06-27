@@ -191,22 +191,46 @@ with tab1:
                 price = item.get("price", 0)
                 all_table_data.append({"銘柄コード": code, "正式社名": name, "リアルタイム現在値": price, "AI評価枠": "1000円以下"})
 
+             # --- 4列の生データ表をここで一旦作成 ---
         if all_table_data:
             df_stock = pd.DataFrame(all_table_data)
+            
+            # --- 【重要】夕方にGeminiが復活したら、表の社名を日本語に綺麗に翻訳させる ---
+            client = genai.Client(api_key=API_KEY)
+            
+            with st.spinner("🧠 Geminiが社名を正式な日本語に変換し、文章で分析中..."):
+                try:
+                    # 作成した表をGeminiにそのまま見せて、日本語化とオーディションを同時に頼む
+                    table_text = df_stock.to_string(index=False)
+                    final_prompt = prompt + f"\n\n以下が現在のスクリーニング通過銘柄のリストデータです。英語の社名は必ず正式な日本語社名に変換した上で解説・オーディションを行ってください。\n\n{table_text}"
+                    
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=final_prompt,
+                        config=types.GenerateContentConfig(tools=[{"google_search": {}}])
+                    )
+                    
+                    # 1. AIの詳しい文章解説を完全復活！
+                    st.header("✨ AI投資エージェントのスクリーニング分析")
+                    st.markdown(response.text)
+                    
+                except Exception as gemini_err:
+                    # 夕方前や制限中の場合は、文章はスキップして優しい警告を出す
+                    st.warning("⚠️ 現在、Geminiの無料利用枠の制限中です（文章の生成と日本語変換をスキップしました）。夕方16〜17時以降にリセットされます。")
+            
+            # 2. スマホでもサクサク動く美しい並び替え表を画面に出す
             st.subheader("🔍 スクリーニング通過銘柄リスト（クリックで並び替え可能）")
-            # スマホでもサクサク動く、4列すべてが美しく埋まった魔法の表をここで一発表示！
             st.dataframe(
                 df_stock, 
                 use_container_width=True, 
                 hide_index=True,
                 column_config={
                     "銘柄コード": st.column_config.TextColumn("銘柄コード"),
-                    "リアルタイム現在値": st.column_config.NumberColumn("現在値", format="¥%d") # 自動で円マーク付与
+                    "リアルタイム現在値": st.column_config.NumberColumn("現在値", format="¥%d")
                 }
             )
     except Exception as table_err:
         pass
-
 
 with tab2:
     st.write("### リアルタイムニュース・出来高発掘")
