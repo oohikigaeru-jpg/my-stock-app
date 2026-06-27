@@ -82,7 +82,15 @@ with tab1:
                 try:
                     stock = yf.Ticker(ticker)
                     info = stock.info
-                    name = info.get('shortName', ticker)
+                    
+                    # 【修正箇所】英語名(shortName)を避け、東証登録の日本語社名(longName)を取得します
+                    name = info.get('longName')
+                    if not name or name == ticker:
+                        name = info.get('shortName', ticker)
+                    
+                    # 「CO.,LTD.」などの英語の不要な末尾を消してスッキリ日本語名にするトリミング
+                    name = name.split(" Co")[0].split(" CO")[0].split(" Ltd")[0].split(" LTD")[0].strip()
+                    
                     per = info.get('trailingPE')
                     pbr = info.get('priceToBook')
                     revenue_growth = info.get('revenueGrowth', 0)
@@ -118,43 +126,26 @@ with tab1:
                 except Exception:
                     continue
 
-            dividend_data = "".join([f"・{s['name']} ({s['ticker']}): 株価 {s['price']:.1f}円 / PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 配当 {s['yield']:.2f}%\n" for s in high_dividend_stocks[:10]])
-            growth_data = "".join([f"・{s['name']} ({s['ticker']}): 株価 {s['price']:.1f}円 / PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 成長率 {s['growth']:.1f}%\n" for s in high_growth_stocks[:10]])
-            under_1000_data = "".join([f"・{s['name']} ({s['ticker']}): 株価 {s['price']:.1f}円 / PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 配当 {s['yield']:.2f}%\n" for s in under_1000_stocks[:15]])
+            # AIへのデータ受け渡し用（※ここでは価格を載せず、AI側のオーディション結果にだけ株価を入れさせます）
+            dividend_data = "".join([f"・{s['name']} ({s['ticker']}): PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 配当 {s['yield']:.2f}% / [現在株価 {s['price']:.1f}円]\n" for s in high_dividend_stocks[:10]])
+            growth_data = "".join([f"・{s['name']} ({s['ticker']}): PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 成長率 {s['growth']:.1f}% / [現在株価 {s['price']:.1f}円]\n" for s in high_growth_stocks[:10]])
+            under_1000_data = "".join([f"・{s['name']} ({s['ticker']}): PER {s['per']:.1f}倍 / PBR {s['pbr']:.1f}倍 / 配当 {s['yield']:.2f}% / [現在株価 {s['price']:.1f}円]\n" for s in under_1000_stocks[:15]])
 
-            # 【新機能】一次審査完了のメッセージの下に、現在価格と各データを画面に直接テキストとして一覧表示します
+            # 【修正箇所】通過数をシンプルに示すだけの見やすい画面配置に変更
             st.success(f"📊 一次審査完了！ 高配当割安: {len(high_dividend_stocks)}社 / 高成長: {len(high_growth_stocks)}社 / 1000円以下株: {len(under_1000_stocks)}社")
-            
-            st.write("### 🔍 一次審査を通過した銘柄のリアルタイム現在値一覧")
-            
-            with st.expander("🟢 高配当・割安の通過銘柄（タップで展開）", expanded=True):
-                if high_dividend_stocks:
-                    for s in high_dividend_stocks:
-                        st.write(f"📈 **{s['name']} ({s['ticker']})** ｜ **現在価格: {s['price']:.1f}円** (配当: {s['yield']:.2f}% / PER: {s['per']:.1f}倍)")
-                else:
-                    st.write("該当銘柄なし")
-
-            with st.expander("🔵 高成長の通過銘柄（タップで展開）", expanded=True):
-                if high_growth_stocks:
-                    for s in high_growth_stocks:
-                        st.write(f"🚀 **{s['name']} ({s['ticker']})** ｜ **現在価格: {s['price']:.1f}円** (成長率目安: {s['growth']:.1f}% / PBR: {s['pbr']:.1f}倍)")
-                else:
-                    st.write("該当銘柄なし")
-
-            with st.expander("🟡 1000円以下の注目株（タップで展開）", expanded=True):
-                if under_1000_stocks:
-                    for s in under_1000_stocks:
-                        st.write(f"💎 **{s['name']} ({s['ticker']})** ｜ **現在価格: {s['price']:.1f}円** (PER: {s['per']:.1f}倍 / PBR: {s['pbr']:.1f}倍)")
-                else:
-                    st.write("該当銘柄なし")
 
             prompt = f"""
             あなたはプロの極めて優秀な投資コンサルタントです。
             プログラムによる一次スクリーニングを通過した以下の3つのリストについて、Google検索で最新ニュースや決算をリアルタイム分析した上で、日本語で詳細に解説・提案してください。
 
-            1.【高配当・割安枠】から、今最もおすすめする銘柄を【1〜2つ】厳選とその詳細な理由。
-            2.【高成長枠】から、今後株価の大幅な伸びが期待できる銘柄を【1〜2つ】厳選とその詳細な理由。
-            3.【現在値1000円以下の注目株枠】から、少額から投資しやすく最新ニュースの材料も良い「おすすめ銘柄3選」を厳選し、それぞれの魅力と選定理由。
+            【超重要ルール：価格の表記について】
+            提案・紹介する具体的な銘柄を解説する際、リスト末尾に記載されている「[現在株価 〇〇円]」の情報を必ず引っ張ってきて、銘柄名と並べて記載してください。
+            （例：「おすすめ銘柄は、トヨタ自動車 (7203.T) [現在の株価: 2,750円] です。理由は…」という風に記載してください）
+            通過しただけの他の全銘柄の一覧表などは画面に出す必要はありません。最終的にあなたがおすすめに選んだ銘柄だけを価格付きで教えてください。
+
+            1.【高配当・割安枠】から、今最もおすすめする銘柄を【1〜2つ】厳選とその詳細な理由（現在価格も含めること）。
+            2.【高成長枠】から、今後株価の大幅な伸びが期待できる銘柄を【1〜2つ】厳選とその詳細な理由（現在価格も含めること）。
+            3.【現在値1000円以下の注目株枠】から、少額から投資しやすく最新ニュースの材料も良い「おすすめ銘柄3選」を厳選し、それぞれの魅力と選定理由（現在価格も含めること）。
             4.初心者が今、市場全体に対して警戒すべきリスク。
 
             【1: 高配当割安株リスト】
@@ -198,7 +189,7 @@ with tab2:
             1. 【市場環境分析：今、東証で資金が集まっているセクター】
                現在、日本の株式市場でどの業種に売買代金が集まり、相場を牽引しているかの動向解説。
             2. 【全自動発掘：ニュース・売買代金急増の超注目銘柄3選】
-               ネット検索で見つけた、今大きな材料ニュースが出て売買代金を伴って動いている「具体的な日本株の銘柄（会社名とコード）」を【3つ】厳選し、それぞれの株価材料と選定理由。
+               ネット検索で見つけた、今大きな材料ニュースが出て売買代金を伴って動いている「具体的な日本の日本語名の銘柄（会社名とコード）」を【3つ】厳選し、それぞれの株価材料と選定理由。価格データが検索で判明した場合はその現在株価も記載してください。
             3. 【お宝お手頃枠：1,000円以下で買える大注目株1選】
                上記で発掘したテーマに絡む企業の中で、さらに「現在価格が1,000円以下」で少額から検討できる魅力的な低位株を【1つ】具体的に挙げて、その理由と魅力。
             4. 【激動相場における冷徹なリスクと注意点】
