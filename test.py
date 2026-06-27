@@ -184,4 +184,3 @@ with tab2:
             """
 
         with st.spinner("🧠 Geminiが最新のトレンド銘柄を執筆中..."):
-            ry:response = client.models.generate_content(model='gemini-2.5-flash',contents=prompt_trend,config=types.GenerateContentConfig(tools=[{"google_search": {}}]))st.header("🏆 AI投資エージェントのリアルタイムトレンド発掘")st.markdown(response.text)except Exception as e:st.error(f"エラーが発生しました。({e})")
