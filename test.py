@@ -170,7 +170,7 @@ with tab1:
                     contents=prompt,
                     config=types.GenerateContentConfig(tools=[{"google_search": {}}])
                 )
-         st.header("✨ AI投資エージェントのスクリーニング分析")
+        st.header("✨ AI投資エージェントのスクリーニング分析")
         
         # 1. まずはAIの詳しい解説文をそのまま画面に表示
         response_text = response.text
