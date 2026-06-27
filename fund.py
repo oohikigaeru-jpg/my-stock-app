@@ -1,3 +1,4 @@
+import pandas as pd
 import yfinance as yf
 import streamlit as st
 from google import genai
@@ -143,7 +144,11 @@ with tab1:
             2.【高成長枠】から、今後株価の大幅な伸びが期待できる銘柄を【1〜2つ】厳選とその詳細な理由（1円単位の正確な現在価格を明記すること）。
             3.【現在値1000円以下の注目株枠】から、少額から投資しやすく最新ニュースの材料も良い「おすすめ銘柄3選」を厳選し、それぞれの魅力と選定理由（1円単位の正確な現在価格を明記すること）。
             4.初心者が今、市場全体に対して警戒すべきリスク。
-
+            
+【システム用出力ルール】
+解説をすべて書き終えたあと、必ず最後に改行し、一番最後の行に、オーディションで選んだ銘柄のデータを以下のフォーマット「データ:[...]」の1行だけで出力してください。余計な文字（```など）は絶対に入れないでください。
+データ:[{"コード":"〇〇","社名":"〇〇","株価":1234,"枠":"高配当割安"}]
+"""
             【1: 高配当割安株リスト】
             {dividend_data if dividend_data else "該当なし"}
 
@@ -161,8 +166,46 @@ with tab1:
                     contents=prompt,
                     config=types.GenerateContentConfig(tools=[{"google_search": {}}])
                 )
-                st.header("🏆 AI投資エージェントのスクリーニング分析")
-                st.markdown(response.text)
+st.header("✨ AI投資エージェントのスクリーニング分析")
+
+# 1. まずはAIの詳しい解説文をそのまま画面に表示
+response_text = response.text
+st.markdown(response_text)
+
+# 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗な表にする
+try:
+    lines = response_text.strip().split("\n")
+    data_line = [l for l in lines if l.startswith("データ:")]
+
+    if data_line:
+        import json
+
+        # 文字をデータ（リスト）に変換
+        json_str = data_line[0].replace("データ:", "").strip()
+        data_list = json.loads(json_str)
+
+        # 表（データフレーム）に変換
+        df_stock = pd.DataFrame(data_list)
+
+        # 🚀 画面に並び替え可能な「スマートな表」を表示！
+        st.subheader("🔍 オーディション厳選銘柄リスト（クリックで並び替え可能）")
+        st.dataframe(
+            df_stock,
+            use_container_width=True,  # 画面幅いっぱいに広げる
+            hide_index=True,  # 左端の無駄な数字列を隠す
+            column_config={
+                "コード": st.column_config.TextColumn(
+                    "銘柄コード"
+                ),  # アルファベット混じり対応
+                "株価": st.column_config.NumberColumn(
+                    "現在値", format="¥%d"
+                ),  # 自動で円マークをつける
+            },
+        )
+except Exception as e:
+    # 万が一AIがデータを出し忘れてもエラーでアプリを止めないお守り
+    pass
+
             except Exception as e:
                 st.error(f"エラーが発生しました。({e})")
 
