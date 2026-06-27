@@ -162,52 +162,50 @@ with tab1:
     {under_1000_data if under_1000_data else "該当なし"}
     """
           # 🚀【超重要】Geminiに頼らず、手元にあるデータを直接美しい表にする！
-    try:
+        try:
         import pandas as pd
         all_table_data = []
         
-        # 1. 高配当割安株のデータを集約
-        if dividend_data:
-            for item in dividend_data:
-                if isinstance(item, str) and item.strip():
-                    all_table_data.append({"厳選された銘柄の情報": item.strip(), "AI評価枠": "高配当割安"})
+        # 1. 高配当割安株のリストからデータを綺麗に登録
+        if 'high_dividend_stocks' in locals() and high_dividend_stocks:
+            for item in high_dividend_stocks:
+                # 辞書データから直接コード、社名、株価をスマートに取得
+                code = item.get("ticker", "不明").replace(".T", "") # .T を消してすっきり
+                name = item.get("name", "不明")
+                price = item.get("price", 0)
+                all_table_data.append({"銘柄コード": code, "正式社名": name, "リアルタイム現在値": price, "AI評価枠": "高配当割安"})
                 
-        # 2. 高成長株のデータを集約
-        if growth_data:
-            for item in growth_data:
-                if isinstance(item, str) and item.strip():
-                    all_table_data.append({"厳選された銘柄の情報": item.strip(), "AI評価枠": "高成長"})
+        # 2. 高成長株のリストからデータを綺麗に登録
+        if 'high_growth_stocks' in locals() and high_growth_stocks:
+            for item in high_growth_stocks:
+                code = item.get("ticker", "不明").replace(".T", "")
+                name = item.get("name", "不明")
+                price = item.get("price", 0)
+                all_table_data.append({"銘柄コード": code, "正式社名": name, "リアルタイム現在値": price, "AI評価枠": "高成長"})
                 
-        # 3. 1000円以下の注目株データを集約
-        if under_1000_data:
-            for item in under_1000_data:
-                if isinstance(item, str) and item.strip():
-                    all_table_data.append({"厳選された銘柄の情報": item.strip(), "AI評価枠": "1000円以下"})
+        # 3. 1000円以下の注目株リストからデータを綺麗に登録
+        if 'under_1000_stocks' in locals() and under_1000_stocks:
+            for item in under_1000_stocks:
+                code = item.get("ticker", "不明").replace(".T", "")
+                name = item.get("name", "不明")
+                price = item.get("price", 0)
+                all_table_data.append({"銘柄コード": code, "正式社名": name, "リアルタイム現在値": price, "AI評価枠": "1000円以下"})
 
         if all_table_data:
             df_stock = pd.DataFrame(all_table_data)
             st.subheader("🔍 スクリーニング通過銘柄リスト（クリックで並び替え可能）")
-            # Excelのようにスマホでもサクサク動く美しい魔法の表を一発表示！
-            st.dataframe(df_stock, use_container_width=True, hide_index=True)
+            # スマホでもサクサク動く、4列すべてが美しく埋まった魔法の表をここで一発表示！
+            st.dataframe(
+                df_stock, 
+                use_container_width=True, 
+                hide_index=True,
+                column_config={
+                    "銘柄コード": st.column_config.TextColumn("銘柄コード"),
+                    "リアルタイム現在値": st.column_config.NumberColumn("現在値", format="¥%d") # 自動で円マーク付与
+                }
+            )
     except Exception as table_err:
         pass
-
-
-        # --- ここからはGeminiの詳しい文章解説（制限がかかっていても、上の表は100%動きます） ---
-        client = genai.Client(api_key=API_KEY)
-        
-        with st.spinner("🧠 Geminiが350社の結果をもとに文章で分析中..."):
-            try:
-                response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt,
-                    config=types.GenerateContentConfig(tools=[{"google_search": {}}])
-                )
-                st.header("✨ AI投資エージェントのスクリーニング分析")
-                st.markdown(response.text)
-            except Exception as e:
-                st.warning("⚠️ 現在、Geminiの無料利用枠の制限中です（文章の生成をスキップしました）。上の【銘柄リスト表】をご活用ください！")
-
 
 
 with tab2:
