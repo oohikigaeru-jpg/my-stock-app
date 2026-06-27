@@ -147,7 +147,8 @@ with tab1:
         with st.spinner("🧠 Geminiが350社の結果をもとに分析中..."):
             try:
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash', contents=prompt,
+                    model='gemini-2.5-flash', 
+                    contents=prompt,
                     config=types.GenerateContentConfig(tools=[{"google_search": {}}])
                 )
                 st.header("🏆 AI投資エージェントのスクリーニング分析")
@@ -183,6 +184,6 @@ with tab2:
 
         with st.spinner("🧠 Geminiが最新のトレンド銘柄を執筆中..."):
             try:
-                response = client.models.generate_content(
+
 
 
