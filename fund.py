@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.express as px
 from google import genai
 from google.genai import types
 
@@ -51,9 +52,14 @@ if st.button("🚀 最新トレンド・新設投信の自動発掘を開始", t
            ネット検索で見つけた「直近で新規設定・新設されたばかりの新しいファンド」や「信託報酬（コスト）の常識を覆す最安値で登場した新興ファンド」を【3つ】具体的に発掘して名前を挙げ、それぞれの特徴と、なぜ今注目すべきなのかの理由。
         3. 【お宝ファンドを活かす理想のスパイス投資比率】
            これら新しく発掘したトレンドファンドを、自分の資産の「サテライト（攻めのサブ枠）」として既存の資産に何％くらい組み合わせるのが最も効果的か、具体的なポートフォリオの黄金比率の提案。
-        4. 【新興・テーマ型ファンド選びの冷徹な注意点】
-           新しく作られたファンドならではの「純資産が小さいうちの繰上償還リスク」や「隠れコスト」など、飛びつく前に初心者が絶対に警戒すべき落とし穴。
-        """
+       4. 【新興・テーマ型ファンド選びの冷徹な注意点】
+新しく作られたファンドならではの「純資産が小さいうちの繰上償還リスク」や「隠れコスト」など、飛びつく前に初心者が絶対に警戒すべき落とし穴。
+
+【システム用出力ルール】
+人間のための解説文をすべて書き終えたあと、必ず最後に改行し、一番最後の行に、あなたが提案したポートフォリオのデータを以下のフォーマット「データ:[...]」の1行だけで出力してください。余計な文字（```など）や前後の説明は絶対に入れないでください。必ず1行で完結させてください。波カッコは必ず2重「{{ }}」にしてください。
+データ:[{{"ファンド名":"〇〇","比率":60}},{{"ファンド名":"△△","比率":40}}]
+""" 
+
 
         try:
             # Google検索を強制オンにして実行
@@ -62,7 +68,58 @@ if st.button("🚀 最新トレンド・新設投信の自動発掘を開始", t
                 contents=prompt,
                 config=types.GenerateContentConfig(tools=[{"google_search": {}}])
             )
-            st.header("🏆 AIエージェントによる最新ファンド発掘レポート")
-            st.markdown(response.text)
+                    st.header("✨ AIエージェントによる最新ファンド発掘レポート")
+        
+        # 1. まずはAIの詳しい解説文をそのまま画面に表示
+        response_text = response.text
+        st.markdown(response_text)
+        
+        # 2. 裏でAIの答えから「データ:」の行を抜き取って、綺麗なドーナツグラフにする
+        try:
+            # 文章を1行ずつに分解する
+            lines = response_text.strip().split("\n")
+            
+            # 下から順番に探して「データ:」で始まる行を1行だけ見つける
+            data_line = None
+            for l in reversed(lines):
+                if l.strip().startswith("データ:"):
+                    data_line = l.strip()
+                    break
+            
+            if data_line:
+                import json
+                import pandas as pd
+                
+                # 「データ:」の文字を消して、純粋なJSONデータにする
+                json_str = data_line.replace("データ:", "").strip()
+                data_list = json.loads(json_str)
+                
+                # グラフ用のデータフレームに変換
+                df_fund = pd.DataFrame(data_list)
+                
+                st.subheader("📊 AI選定の黄金ポートフォリオ比率")
+                
+                # 🚀 洗練されたドーナツ型円グラフを作成
+                fig = px.pie(
+                    df_fund, 
+                    values="比率", 
+                    names="ファンド名", 
+                    hole=0.4, # 真ん中に穴をあけてドーナツ型に
+                    color_discrete_sequence=px.colors.sequential.Tealgrn # 目に優しいグリーン・ブルー系の配色
+                )
+                
+                # スマホの画面幅に合わせてデザインを最適化
+                fig.update_layout(
+                    margin=dict(l=20, r=20, t=20, b=20),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5) # 凡例を下に配置
+                )
+                
+                # Streamlit画面にグラフを描画！
+                st.plotly_chart(fig, use_container_width=True)
+                
+        except Exception as graph_err:
+            # 万が一AIがデータを出し忘れてもエラーでアプリを止めないお守り
+            pass
+
         except Exception as e:
             st.error(f"エラーが発生しました。時間を置いてもう一度お試しください。({e})")
