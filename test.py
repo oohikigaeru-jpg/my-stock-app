@@ -165,31 +165,32 @@ with tab1:
         try:
             import pandas as pd
             all_table_data = []
-                      # 1. 高配当割安株のデータを集約
+                         # 1. 高配当割安株のデータを集約
             if dividend_data:
                 for item in dividend_data:
-                    # itemが文字列であることを確認して、社名とコードを綺麗に抜き出す
-                    if isinstance(item, str) and "(" in item:
-                        name_part = item.split("(")[0].strip()
-                        code_part = item.split("(")[1].replace(")", "").strip()
+                    if isinstance(item, str) and " : " in item:
+                        parts = item.split(" : ")
+                        code_part = parts[0].strip()
+                        name_part = parts[1].strip()
                         all_table_data.append({"銘柄コード": code_part, "正式社名": name_part, "AI評価枠": "高配当割安"})
                     
             # 2. 高成長株のデータを集約
             if growth_data:
                 for item in growth_data:
-                    if isinstance(item, str) and "(" in item:
-                        name_part = item.split("(")[0].strip()
-                        code_part = item.split("(")[1].replace(")", "").strip()
+                    if isinstance(item, str) and " : " in item:
+                        parts = item.split(" : ")
+                        code_part = parts[0].strip()
+                        name_part = parts[1].strip()
                         all_table_data.append({"銘柄コード": code_part, "正式社名": name_part, "AI評価枠": "高成長"})
                     
             # 3. 1000円以下の注目株データを集約
             if under_1000_data:
                 for item in under_1000_data:
-                    if isinstance(item, str) and "(" in item:
-                        name_part = item.split("(")[0].strip()
-                        code_part = item.split("(")[1].replace(")", "").strip()
+                    if isinstance(item, str) and " : " in item:
+                        parts = item.split(" : ")
+                        code_part = parts[0].strip()
+                        name_part = parts[1].strip()
                         all_table_data.append({"銘柄コード": code_part, "正式社名": name_part, "AI評価枠": "1000円以下"})
-
 
             if all_table_data:
                 df_stock = pd.DataFrame(all_table_data)
