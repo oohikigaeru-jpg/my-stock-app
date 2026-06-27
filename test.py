@@ -71,7 +71,6 @@ with tab1:
         "186A.T", "193A.T", "198A.T", "215A.T", "218A.T", "233A.T", "240A.T", "248A.T", "250A.T", "5595.T",
         "5871.T", "9166.T", "9348.T", "5253.T"
     ]
-
     if st.button("🚀 350社スクリーニングを開始", type="primary", key="btn_scr"):
         with st.spinner("350銘柄を調査中...（約2分かかります）"):
             client = genai.Client(api_key=API_KEY)
@@ -105,7 +104,7 @@ with tab1:
                             "per": per, "pbr": pbr, "yield": dividend_yield
                         })
 
-                    if (revenue_growth pipeline and revenue_growth >= 0.20) or (earnings_growth and earnings_growth >= 0.20):
+                    if (revenue_growth and revenue_growth >= 0.20) or (earnings_growth and earnings_growth >= 0.20):
                         high_growth_stocks.append({
                             "ticker": ticker, "name": name, "price": latest_price,
                             "per": per, "pbr": pbr, "growth": max(revenue_growth or 0, earnings_growth or 0) * 100
@@ -182,14 +181,14 @@ with tab2:
                売買代金急増株ならではの急激な乱高下リスクや、初心者が飛びつく前に必ず確認すべき警戒ポイント。
             """
 
-    with st.spinner("🧠 Geminiが最新のトレンド銘柄を執筆中..."):
-        try:
-            response = client.models.generate_content(
-                model='gemini-2.5-flash', 
-                contents=prompt_trend,
-                config=types.GenerateContentConfig(tools=[{"google_search": {}}])
-            )
-            st.header("🏆 AI投資エージェントのリアルタイムトレンド発掘")
-            st.markdown(response.text)
-        except Exception as e:
-            st.error(f"エラーが発生しました。({e})")
+        with st.spinner("🧠 Geminiが最新のトレンド銘柄を執筆中..."):
+            try:
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash', 
+                    contents=prompt_trend,
+                    config=types.GenerateContentConfig(tools=[{"google_search": {}}])
+                )
+                st.header("🏆 AI投資エージェントのリアルタイムトレンド発掘")
+                st.markdown(response.text)
+            except Exception as e:
+                st.error(f"エラーが発生しました。({e})")
